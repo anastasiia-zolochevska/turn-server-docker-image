@@ -19,8 +19,8 @@ server-name=$3
 lt-cred-mech
 userdb=/var/lib/turn/turndb
 # use real-valid certificate/privatekey files
-cert=/etc/ssl/certificate.pem
-pkey=/etc/ssl/private.key
+cert=/etc/ssl/turn_server_cert.pem
+pkey=/etc/ssl/turn_server_pkey.pem
  
 no-stdout-log"  | tee /etc/turnserver.conf
 
