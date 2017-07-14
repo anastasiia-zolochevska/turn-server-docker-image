@@ -1,32 +1,39 @@
-echo $1
-echo $2
-echo $3
+#!/bin/bash
 
+# Error if non-true result
+set -e
+
+if [[ -z "$1" || -z "$2" || -z "$3" ]]; then
+    echo "Usage: deploy-turnserver.sh <postgres_connection_string> <default_realm> <auth_method>"
+    exit 1
+fi
+
+# Error on unset variables
+set -u
+
+echo Discovering internal and external ip address...
 internalIp="$(ip a | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*' | grep -v '127.0.0.1')"
 externalIp="$(dig +short myip.opendns.com @resolver1.opendns.com)"
+echo External ip address: $externalIp
+echo Internal ip address: $internalIp
 
-echo "listening-port=3478
-tls-listening-port=5349
+if [ $3 == 'shared_secret' ]
+then
+    useAuthSecret="--use-auth-secret"
+else
+    useAuthSecret=""
+fi
 
-listening-ip="$internalIp"
+echo Starting turnserver with auth methos $auth_method 
 
-relay-ip="$internalIp"
-external-ip="$externalIp"
-
-realm=$3
-server-name=$3
-
-lt-cred-mech
-userdb=/var/lib/turn/turndb
-# use real-valid certificate/privatekey files
-cert=/etc/ssl/turn_server_cert.pem
-pkey=/etc/ssl/turn_server_pkey.pem
- 
-no-stdout-log"  | tee /etc/turnserver.conf
-
-
-turnadmin -a -u $1 -p $2 -r $3
-
-turnserver
-
-echo "TURN server running. IP: "$externalIp" Username: $1, password: $2"
+exec turnserver -v \
+    -n \
+    -L "$internalIp" \
+    -E "$internalIp" \
+    -X "$externalIp" \
+    --lt-cred-mech \
+    $auth_method \
+    --cert "etc/ssl/turn_server_cert.pem" \
+    --pkey "etc/ssl/turn_server_pkey.pem" \
+    --psql-userdb "$1" \
+    --realm $2
