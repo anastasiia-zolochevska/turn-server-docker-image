@@ -9,9 +9,10 @@ ADD . /app
 
 EXPOSE 3478
 
-RUN echo 'deb http://ftp.us.debian.org/debian jessie main' | tee --append /etc/apt/sources.list
-RUN apt-get update
-RUN apt-get -y install dnsutils
-RUN apt-get -y install coturn
+RUN apt-get update && apt-get install -y \
+    dnsutils \
+    coturn \
+  && rm -rf /var/lib/apt/lists/*
+  
 
 ENTRYPOINT ["bash", "deploy-turnserver.sh"]    
